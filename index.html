@@ -198,7 +198,7 @@
 
                 <div class="campo">
                     <label for="chamado">Nº do chamado *</label>
-                    <input type="text" id="chamado" required>
+                    <input type="number" id="chamado" required onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                 </div>
 
                 <div class="campo">
@@ -228,7 +228,7 @@
 
                 <div class="campo full">
                     <label for="item">Item descritivo</label>
-                    <input type="text" id="item">
+                    <input type="number" id="item" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                 </div>
 
                 <div class="campo full">
@@ -238,12 +238,12 @@
 
                 <div class="campo">
                     <label for="evaporadora">Evaporadora</label>
-                    <input type="text" id="evaporadora">
+                    <input type="number" id="evaporadora" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                 </div>
 
                 <div class="campo">
                     <label for="condensadora">Condensadora</label>
-                    <input type="text" id="condensadora">
+                    <input type="number" id="condensadora" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                 </div>
 
                 <div class="campo full">
@@ -259,6 +259,15 @@
                 <div class="campo">
                     <label for="data">Data *</label>
                     <input type="date" id="data" required>
+                </div>
+
+                <div class="campo">
+                    <label for="status">Status do chamado *</label>
+                    <select id="status" required>
+                        <option value="Em atendimento">Em atendimento</option>
+                        <option value="Resolvido">Resolvido</option>
+                        <option value="Fechado">Fechado</option>
+                    </select>
                 </div>
 
             </div>
@@ -297,6 +306,7 @@
                         <th>Setor</th>
                         <th>Local</th>
                         <th>Data</th>
+                        <th>Status</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -334,6 +344,7 @@ function validarFormulario() {
     if (!validarCampoTexto("chamado", "Nº do chamado")) return false;
     if (!validarCampoTexto("solicitante", "Solicitante")) return false;
     if (!validarCampoTexto("data", "Data")) return false;
+    if (!validarCampoTexto("status", "Status do chamado")) return false;
     return true;
 }
 
@@ -368,7 +379,8 @@ formulario.addEventListener("submit", function(event) {
         condensadora: document.getElementById("condensadora").value.trim(),
         defeito: document.getElementById("defeito").value.trim(),
         solucao: document.getElementById("solucao").value.trim(),
-        data: document.getElementById("data").value
+        data: document.getElementById("data").value,
+        status: document.getElementById("status").value
     };
 
     if (editando !== null) {
@@ -399,6 +411,7 @@ function listarChamados() {
             ${item.solicitante}
             ${item.setor}
             ${item.local}
+            ${item.status}
         `.toLowerCase();
 
         if (!texto.includes(pesquisa)) return;
@@ -412,6 +425,7 @@ function listarChamados() {
             <td>${item.setor}</td>
             <td>${item.local}</td>
             <td>${formatarDataBR(item.data)}</td>
+            <td>${item.status || 'Em atendimento'}</td>
 
             <td>
                 <div class="acoes">
@@ -450,6 +464,7 @@ function editarChamado(index) {
     document.getElementById("defeito").value = item.defeito;
     document.getElementById("solucao").value = item.solucao;
     document.getElementById("data").value = item.data;
+    document.getElementById("status").value = item.status || "Em atendimento";
 
     editando = index;
 
@@ -471,6 +486,7 @@ function limparFormulario() {
     formulario.reset();
     editando = null;
     document.getElementById("data").value = new Date().toISOString().split("T")[0];
+    document.getElementById("status").value = "Em atendimento";
 }
 
 function imprimirChamado(index) {
@@ -484,6 +500,7 @@ function imprimirChamado(index) {
         <p><strong>Nº do chamado:</strong> ${item.chamado}</p>
         <p><strong>Ordem de serviço:</strong> ${item.os}</p>
         <p><strong>Data:</strong> ${formatarDataBR(item.data)}</p>
+        <p><strong>Status do chamado:</strong> ${item.status || 'Em atendimento'}</p>
 
         <h3>Solicitação</h3>
         <p><strong>Solicitante:</strong> ${item.solicitante}</p>
