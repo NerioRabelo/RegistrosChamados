@@ -69,7 +69,6 @@
         border: 1px solid #ccc;
         border-radius: 6px;
         font-size: 15px;
-        background-color: #fff;
     }
 
     textarea {
@@ -90,11 +89,6 @@
         border-radius: 6px;
         cursor: pointer;
         font-weight: bold;
-        transition: opacity 0.2s;
-    }
-
-    button:hover {
-        opacity: 0.9;
     }
 
     .salvar {
@@ -135,7 +129,6 @@
         padding: 10px;
         border-bottom: 1px solid #ddd;
         text-align: left;
-        vertical-align: middle;
     }
 
     th {
@@ -149,63 +142,6 @@
         flex-wrap: wrap;
     }
 
-    /* Estilos para os Badges de Status */
-    .status-badge {
-        padding: 5px 10px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: bold;
-        display: inline-block;
-        text-align: center;
-        white-space: nowrap;
-    }
-    
-    .status-em-atendimento {
-        background: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeeba;
-    }
-    
-    .status-resolvido {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-    
-    .status-fechado {
-        background: #e2e3e5;
-        color: #383d41;
-        border: 1px solid #d6d8db;
-    }
-
-    /* Estilos do Modal Customizado */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .modal-content {
-        background: white;
-        padding: 25px;
-        border-radius: 8px;
-        min-width: 300px;
-        max-width: 90%;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    .modal-buttons {
-        margin-top: 20px;
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-    }
-
     @media(max-width: 700px) {
         .grid {
             grid-template-columns: 1fr;
@@ -217,10 +153,6 @@
 
         table {
             font-size: 13px;
-        }
-        
-        th, td {
-            padding: 8px 5px;
         }
     }
 
@@ -250,12 +182,12 @@
 
 <body>
 
-<header class="nao-imprimir">
+<header>
     <h1>Sistema de Chamados e Ordens de Serviço</h1>
-    <p>Digitalização de manutenção local</p>
+    <p>Digitalização de manutenção</p>
 </header>
 
-<div class="container nao-imprimir">
+<div class="container">
 
     <div class="card">
         <h2>Cadastro do Chamado</h2>
@@ -329,19 +261,10 @@
                     <input type="date" id="data" required>
                 </div>
 
-                <div class="campo">
-                    <label for="status">Status *</label>
-                    <select id="status" required>
-                        <option value="Em atendimento">Em atendimento</option>
-                        <option value="Resolvido">Resolvido</option>
-                        <option value="Fechado">Fechado</option>
-                    </select>
-                </div>
-
             </div>
 
             <div class="botoes">
-                <button type="submit" id="btn-salvar" class="salvar">
+                <button type="submit" class="salvar">
                     Salvar chamado
                 </button>
 
@@ -353,7 +276,7 @@
         </form>
     </div>
 
-    <div class="card">
+    <div class="card nao-imprimir">
         <h2>Chamados cadastrados</h2>
 
         <input
@@ -374,7 +297,6 @@
                         <th>Setor</th>
                         <th>Local</th>
                         <th>Data</th>
-                        <th>Status</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -384,66 +306,24 @@
         </div>
     </div>
 
-</div>
+    <div id="impressao"></div>
 
-<!-- Elemento para impressão -->
-<div id="impressao"></div>
-
-<!-- Modal Personalizado -->
-<div id="custom-modal" class="modal-overlay nao-imprimir">
-    <div class="modal-content">
-        <h3 id="modal-title" style="margin-top: 0; color: #17365d;">Aviso</h3>
-        <p id="modal-message"></p>
-        <div class="modal-buttons">
-            <button id="modal-btn-cancel" class="limpar" style="display: none;">Cancelar</button>
-            <button id="modal-btn-confirm" class="salvar">OK</button>
-        </div>
-    </div>
 </div>
 
 <script>
+
 let chamados = JSON.parse(localStorage.getItem("chamados")) || [];
-let editandoIndex = null;
+let editando = null;
 
 const formulario = document.getElementById("formulario");
-const inputChamado = document.getElementById("chamado");
-const inputPesquisa = document.getElementById("pesquisa");
 
-// --- Sistema de Modal Customizado ---
-let modalConfirmCallback = null;
-
-function showAlert(message) {
-    document.getElementById("modal-title").innerText = "Aviso";
-    document.getElementById("modal-message").innerText = message;
-    document.getElementById("modal-btn-cancel").style.display = "none";
-    document.getElementById("custom-modal").style.display = "flex";
-    modalConfirmCallback = null;
-}
-
-function showConfirm(message, callback) {
-    document.getElementById("modal-title").innerText = "Confirmação";
-    document.getElementById("modal-message").innerText = message;
-    document.getElementById("modal-btn-cancel").style.display = "inline-block";
-    document.getElementById("custom-modal").style.display = "flex";
-    modalConfirmCallback = callback;
-}
-
-document.getElementById("modal-btn-confirm").addEventListener("click", () => {
-    document.getElementById("custom-modal").style.display = "none";
-    if (modalConfirmCallback) modalConfirmCallback();
-});
-
-document.getElementById("modal-btn-cancel").addEventListener("click", () => {
-    document.getElementById("custom-modal").style.display = "none";
-    modalConfirmCallback = null;
-});
-// ------------------------------------
+// Funções Auxiliares de Validação
 
 function validarCampoTexto(idCampo, nomeExibicao) {
     const el = document.getElementById(idCampo);
     const valor = el ? el.value.trim() : "";
     if (!valor) {
-        showAlert(`O campo "${nomeExibicao}" é obrigatório.`);
+        alert(`O campo "${nomeExibicao}" é obrigatório e não pode conter apenas espaços.`);
         if (el) el.focus();
         return false;
     }
@@ -454,16 +334,6 @@ function validarFormulario() {
     if (!validarCampoTexto("chamado", "Nº do chamado")) return false;
     if (!validarCampoTexto("solicitante", "Solicitante")) return false;
     if (!validarCampoTexto("data", "Data")) return false;
-    
-    const numChamado = inputChamado.value.trim();
-    // Verifica duplicidade exceto se estiver editando o próprio registro atual
-    const existe = chamados.some((ch, index) => ch.chamado === numChamado && index !== editandoIndex);
-    
-    if (existe) {
-        showAlert(`Já existe um chamado cadastrado com o número ${numChamado}.`);
-        inputChamado.focus();
-        return false;
-    }
     return true;
 }
 
@@ -476,16 +346,14 @@ function formatarDataBR(dataString) {
     return dataString;
 }
 
-function obterClasseStatus(status) {
-    if (status === "Em atendimento") return "status-em-atendimento";
-    if (status === "Resolvido") return "status-resolvido";
-    if (status === "Fechado") return "status-fechado";
-    return "";
-}
+// Submissão do Formulário
 
 formulario.addEventListener("submit", function(event) {
     event.preventDefault();
-    if (!validarFormulario()) return;
+
+    if (!validarFormulario()) {
+        return;
+    }
 
     const registro = {
         chamado: document.getElementById("chamado").value.trim(),
@@ -500,36 +368,37 @@ formulario.addEventListener("submit", function(event) {
         condensadora: document.getElementById("condensadora").value.trim(),
         defeito: document.getElementById("defeito").value.trim(),
         solucao: document.getElementById("solucao").value.trim(),
-        data: document.getElementById("data").value,
-        status: document.getElementById("status").value
+        data: document.getElementById("data").value
     };
 
-    if (editandoIndex !== null) {
-        chamados[editandoIndex] = registro;
-        showAlert("Chamado atualizado com sucesso!");
+    if (editando !== null) {
+        chamados[editando] = registro;
+        editando = null;
     } else {
         chamados.push(registro);
-        showAlert("Chamado salvo com sucesso!");
     }
 
     localStorage.setItem("chamados", JSON.stringify(chamados));
+
     limparFormulario();
     listarChamados();
+
+    alert("Chamado salvo com sucesso!");
 });
 
 function listarChamados() {
     const lista = document.getElementById("lista");
-    const pesquisa = inputPesquisa.value.toLowerCase();
+    const pesquisa = document.getElementById("pesquisa").value.toLowerCase();
+
     lista.innerHTML = "";
 
     chamados.forEach((item, index) => {
-        const statusAtual = item.status || "Em atendimento"; 
+
         const texto = `
             ${item.chamado}
             ${item.solicitante}
             ${item.setor}
             ${item.local}
-            ${statusAtual}
         `.toLowerCase();
 
         if (!texto.includes(pesquisa)) return;
@@ -543,26 +412,30 @@ function listarChamados() {
             <td>${item.setor}</td>
             <td>${item.local}</td>
             <td>${formatarDataBR(item.data)}</td>
-            <td>
-                <span class="status-badge ${obterClasseStatus(statusAtual)}">
-                    ${statusAtual}
-                </span>
-            </td>
+
             <td>
                 <div class="acoes">
-                    <button class="editar" onclick="editarChamado(${index})">Editar</button>
-                    <button class="excluir" onclick="excluirChamado(${index})">Excluir</button>
-                    <button class="imprimir" onclick="imprimirChamado(${index})">Imprimir</button>
+                    <button class="editar" onclick="editarChamado(${index})">
+                        Editar
+                    </button>
+
+                    <button class="excluir" onclick="excluirChamado(${index})">
+                        Excluir
+                    </button>
+
+                    <button class="imprimir" onclick="imprimirChamado(${index})">
+                        Imprimir
+                    </button>
                 </div>
             </td>
         `;
+
         lista.appendChild(linha);
     });
 }
 
 function editarChamado(index) {
     const item = chamados[index];
-    if(!item) return;
 
     document.getElementById("chamado").value = item.chamado;
     document.getElementById("os").value = item.os;
@@ -571,64 +444,63 @@ function editarChamado(index) {
     document.getElementById("bloco").value = item.bloco;
     document.getElementById("local").value = item.local;
     document.getElementById("item").value = item.item;
-    document.getElementById("aparelho").value = item.aparelho || "";
-    document.getElementById("evaporadora").value = item.evaporadora || "";
-    document.getElementById("condensadora").value = item.condensadora || "";
-    document.getElementById("defeito").value = item.defeito || "";
-    document.getElementById("solucao").value = item.solucao || "";
+    document.getElementById("aparelho").value = item.aparelho;
+    document.getElementById("evaporadora").value = item.evaporadora;
+    document.getElementById("condensadora").value = item.condensadora;
+    document.getElementById("defeito").value = item.defeito;
+    document.getElementById("solucao").value = item.solucao;
     document.getElementById("data").value = item.data;
-    document.getElementById("status").value = item.status || "Em atendimento";
 
-    editandoIndex = index; 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    editando = index;
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 }
 
 function excluirChamado(index) {
-    showConfirm("Deseja realmente excluir este chamado?", () => {
+    if (confirm("Deseja realmente excluir este chamado?")) {
         chamados.splice(index, 1);
         localStorage.setItem("chamados", JSON.stringify(chamados));
         listarChamados();
-        showAlert("Chamado excluído com sucesso!");
-    });
+    }
 }
 
 function limparFormulario() {
     formulario.reset();
-    editandoIndex = null;
+    editando = null;
     document.getElementById("data").value = new Date().toISOString().split("T")[0];
-    document.getElementById("status").value = "Em atendimento";
 }
 
 function imprimirChamado(index) {
     const item = chamados[index];
-    if(!item) return;
-
-    const statusAtual = item.status || "Em atendimento";
 
     document.getElementById("impressao").innerHTML = `
         <h1>ORDEM DE SERVIÇO</h1>
         <hr>
+
         <h3>Identificação</h3>
         <p><strong>Nº do chamado:</strong> ${item.chamado}</p>
         <p><strong>Ordem de serviço:</strong> ${item.os}</p>
         <p><strong>Data:</strong> ${formatarDataBR(item.data)}</p>
-        <p><strong>Status Atual:</strong> ${statusAtual}</p>
-        
+
         <h3>Solicitação</h3>
         <p><strong>Solicitante:</strong> ${item.solicitante}</p>
         <p><strong>Setor:</strong> ${item.setor}</p>
         <p><strong>Bloco:</strong> ${item.bloco}</p>
         <p><strong>Local:</strong> ${item.local}</p>
         <p><strong>Item descritivo:</strong> ${item.item}</p>
-        
+
         <h3>Equipamento</h3>
-        <p><strong>Descrição do aparelho:</strong><br>${item.aparelho || "Não informado"}</p>
-        <p><strong>Evaporadora:</strong> ${item.evaporadora || "Não informado"}</p>
-        <p><strong>Condensadora:</strong> ${item.condensadora || "Não informado"}</p>
-        
+        <p><strong>Descrição do aparelho:</strong><br>${item.aparelho}</p>
+        <p><strong>Evaporadora:</strong> ${item.evaporadora}</p>
+        <p><strong>Condensadora:</strong> ${item.condensadora}</p>
+
         <h3>Manutenção</h3>
-        <p><strong>Defeito relatado:</strong><br>${item.defeito || "Não informado"}</p>
-        <p><strong>Solução do defeito:</strong><br>${item.solucao || "Não informado"}</p>
+        <p><strong>Defeito relatado:</strong><br>${item.defeito}</p>
+        <p><strong>Solução do defeito:</strong><br>${item.solucao}</p>
+
         <br><br>
         <p>________________________________________</p>
         <p>Responsável pela execução</p>
@@ -640,10 +512,10 @@ function imprimirChamado(index) {
     window.print();
 }
 
-// Inicializa a tabela e limpa o form ao carregar
 limparFormulario();
 listarChamados();
 
 </script>
+
 </body>
 </html>
