@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Chamados e Ordens de Serviço</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+            color: #222;
+        }
+
+        header {
+            background: #17365d;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .btn-voltar {
+            position: absolute;
+            left: 20px;
+            top: 25px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 25px auto;
+            padding: 0 15px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #17365d;
+        }
+
+        .pesquisa {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #17365d;
+            color: white;
+        }
+
+        .acoes {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .editar {
+            background: #ffc107;
+            color: #222;
+        }
+
+        .excluir {
+            background: #dc3545;
+            color: white;
+        }
+
+        .imprimir {
+            background: #0d6efd;
+            color: white;
+        }
+
+        @media(max-width: 700px) {
+            .btn-voltar {
+                position: static;
+                display: inline-block;
+                margin-bottom: 15px;
+            }
+
+            table {
+                font-size: 13px;
+            }
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #impressao,
+            #impressao * {
+                visibility: visible;
+            }
+
+            #impressao {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 30px;
+            }
+
+            .nao-imprimir {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="nao-imprimir">
+        <a href="index.html" class="btn-voltar">← Novo Cadastro</a>
+        <h1>Relatório de Chamados</h1>
+        <p>Todos os registros salvos na nuvem ordenados por data</p>
+    </header>
+
+    <div class="container">
+        <div class="card nao-imprimir">
+            <h2>Chamados Cadastrados</h2>
+            <input class="pesquisa" type="text" id="pesquisa"
+                placeholder="Pesquisar por chamado, solicitante, setor ou local..." onkeyup="filtrarChamados()">
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Chamado</th>
+                            <th>OS</th>
+                            <th>Solicitante</th>
+                            <th>Setor</th>
+                            <th>Local</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="impressao"></div>
+    </div>
+
+    <!-- SDKs do Firebase (Modular v10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // COLE A SUA CONFIGURAÇÃO DO FIREBASE AQUI:
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgPCSSwzr59QFRI6zgen6eQr9eHfLEnnQ",
+            authDomain: "registroschamados-ae4b3.firebaseapp.com",
+            projectId: "registroschamados-ae4b3",
+            storageBucket: "registroschamados-ae4b3.firebasestorage.app",
+            messagingSenderId: "572947617370",
+            appId: "1:572947617370:web:0f6b50855af37911f8aa63"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let listaChamadosCache = [];
+
+        function formatarDataBR(dataString) {
+            if (!dataString) return "";
+            const partes = dataString.split("-");
+            if (partes.length === 3) {
+                return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            }
+            return dataString;
+        }
+
+        async function carregarChamados() {
+            const querySnapshot = await getDocs(collection(db, "chamados"));
+            listaChamadosCache = [];
+            querySnapshot.forEach((docSnap) => {
+                listaChamadosCache.push({ id: docSnap.id, ...docSnap.data() });
+            });
+
+            // Ordenar por data
+            listaChamadosCache.sort((a, b) => new Date(a.data) - new Date(b.data));
+            renderizarTabela(listaChamadosCache);
+        }
+
+        function renderizarTabela(dados) {
+            const lista = document.getElementById("lista");
+            lista.innerHTML = "";
+
+            dados.forEach((item) => {
+                const linha = document.createElement("tr");
+                linha.innerHTML = `
+                <td>${formatarDataBR(item.data)}</td>
+                <td>${item.chamado}</td>
+                <td>${item.os || ''}</td>
+                <td>${item.solicitante}</td>
+                <td>${item.setor || ''}</td>
+                <td>${item.local || ''}</td>
+                <td>${item.status || 'Em atendimento'}</td>
+                <td>
+                    <div class="acoes">
+                        <button class="editar" onclick="editarChamado('${item.id}')">Editar</button>
+                        <button class="excluir" onclick="excluirChamado('${item.id}')">Excluir</button>
+                        <button class="imprimir" onclick='imprimirChamado(${JSON.stringify(item)})'>Imprimir</button>
+                    </div>
+                </td>
+            `;
+                lista.appendChild(linha);
+            });
+        }
+
+        window.filtrarChamados = function () {
+            const pesquisa = document.getElementById("pesquisa").value.toLowerCase();
+            const filtrados = listaChamadosCache.filter(item => {
+                const texto = `${item.chamado} ${item.solicitante} ${item.setor} ${item.local} ${item.status}`.toLowerCase();
+                return texto.includes(pesquisa);
+            });
+            renderizarTabela(filtrados);
+        }
+
+        window.editarChamado = function (id) {
+            window.location.href = `index.html?editar=${id}`;
+        }
+
+        window.excluirChamado = async function (id) {
+            if (confirm("Deseja realmente excluir este chamado do banco de dados?")) {
+                try {
+                    await deleteDoc(doc(db, "chamados", id));
+                    carregarChamados();
+                } catch (e) {
+                    console.error("Erro ao excluir: ", e);
+                    alert("Erro ao excluir o chamado.");
+                }
+            }
+        }
+
+        window.imprimirChamado = function (item) {
+            document.getElementById("impressao").innerHTML = `
+            <h1>ORDEM DE SERVIÇO</h1>
+            <hr>
+            <h3>Identificação</h3>
+            <p><strong>Nº do chamado:</strong> ${item.chamado}</p>
+            <p><strong>Ordem de serviço:</strong> ${item.os || ''}</p>
+            <p><strong>Data:</strong> ${formatarDataBR(item.data)}</p>
+            <p><strong>Status do chamado:</strong> ${item.status || 'Em atendimento'}</p>
+
+            <h3>Solicitação</h3>
+            <p><strong>Solicitante:</strong> ${item.solicitante}</p>
+            <p><strong>Setor:</strong> ${item.setor || ''}</p>
+            <p><strong>Bloco:</strong> ${item.bloco || ''}</p>
+            <p><strong>Local:</strong> ${item.local || ''}</p>
+            <p><strong>Item descritivo:</strong> ${item.item || ''}</p>
+
+            <h3>Equipamento</h3>
+            <p><strong>Descrição do aparelho:</strong><br>${item.aparelho || ''}</p>
+            <p><strong>Evaporadora:</strong> ${item.evaporadora || ''}</p>
+            <p><strong>Condensadora:</strong> ${item.condensadora || ''}</p>
+
+            <h3>Manutenção</h3>
+            <p><strong>Defeito relatado:</strong><br>${item.defeito || ''}</p>
+            <p><strong>Solução do defeito:</strong><br>${item.solucao || ''}</p>
+
+            <br><br>
+            <p>________________________________________</p>
+            <p>Responsável pela execução</p>
+            <br>
+            <p>________________________________________</p>
+            <p>Responsável pelo recebimento</p>
+        `;
+            window.print();
+        }
+
+        carregarChamados();
+    </script>
+
+</body>
+
+</html>
